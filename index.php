@@ -54,7 +54,11 @@ include 'conndb.php';
 			<section id="exercice1">
 				<h4>1.  Afficher tous les gens dont le nom est palmer </h4>
 				<?php
-				$reponse = $db->query('SELECT * FROM users WHERE last_name=\'palmer\'');
+				$reponse = $db->prepare('SELECT * FROM users WHERE last_name= :palmer');
+				$reponse->execute(array(
+					'palmer' => 'palmer'
+				));
+
 				echo '<table class="table striped">
 				<tr>
 				<th>Firstname</th>
@@ -76,7 +80,10 @@ include 'conndb.php';
 			<section id="exercice2">
 				<h4>2. Afficher toutes les femmes </h4>
 				<?php
-				$reponse = $db->query('SELECT first_name,last_name FROM users WHERE gender=\'Female\'');
+				$reponse = $db->prepare('SELECT first_name,last_name FROM users WHERE gender= :female');
+				$reponse->execute(array(
+					'female' => 'Female'
+				));
 				echo '<table class="table striped">
 				<tr>
 				<th>Firstname</th>
@@ -98,7 +105,10 @@ include 'conndb.php';
 			<section id="exercice3">
 				<h4>3. Tous les états dont la lettre commence par N </h4>
 				<?php
-				$reponse = $db->query('SELECT country_code FROM users WHERE country_code LIKE \'N%\'');
+				$reponse = $db->prepare('SELECT country_code FROM users WHERE country_code LIKE :term');
+				$reponse->execute(array(
+					'term' => 'N%'
+				));
 				echo '<table class="table striped">
 				<tr>
 				<th>Country</th> 
@@ -118,7 +128,10 @@ include 'conndb.php';
 			<section id="exercice4">
 				<h4>4. Tous les emails qui contiennent google </h4>
 				<?php
-				$reponse = $db->query('SELECT email FROM users WHERE email LIKE \'%google%\'');
+				$reponse = $db->prepare('SELECT email FROM users WHERE email LIKE :term');
+				$reponse->execute(array(
+					'term' => '%google%'
+				));
 				echo '<table class="table striped">
 				<tr>
 				<th>Email</th> 
@@ -138,7 +151,8 @@ include 'conndb.php';
 			<section id="exercice5">
 				<h4>5.Répartition par Etat et le nombre d’enregistrement par état  </h4>
 				<?php
-				$reponse = $db->query('SELECT country_code, COUNT(country_code) FROM users GROUP BY country_code ORDER BY COUNT(country_code) DESC');
+				$reponse = $db->prepare('SELECT country_code, COUNT(country_code) FROM users GROUP BY country_code ORDER BY COUNT(country_code) DESC');
+				$reponse->execute();
 				echo '<table class="table striped">
 				<tr>
 				<th>Country</th> 
@@ -161,18 +175,31 @@ include 'conndb.php';
 				<h4>6. Insérer un utilisateur, lui mettre à jour son adresse mail puis supprimer l’utilisateur. </h4>
 				<h5>Insertion</h5>
 				<?php
-				$reponse = "INSERT INTO users 
-				VALUES (NULL, 'Dorothee', 'Vader', 'test@google.com', 'Female', NULL, '11/06/1888', '39000', 'http://unknown.void',NULL, 'FR')";
-				$db->exec($reponse);
+				$req = $db->prepare("INSERT INTO users (first_name, last_name, email, gender, ip_address, birth_date, zip_code, avatar_url, state_code, country_code) VALUES (:first_name, :last_name, :email, :gender, :ip_address, :birth_date, :zip_code, :avatar_url, :state_code, :country_code)");
+				$req->execute(array(
+					':first_name' => 'Dorothee',
+					':last_name' => 'Vader',
+					':email' => 'test@google.com',
+					':gender' => 'Female',
+					':ip_address' => NULL,
+					':birth_date' => '1981/06/01',
+					':zip_code' => '39000',
+					':avatar_url' => 'http://unknown.void',
+					':state_code' => NULL,
+					':country_code' => 'FR'
+				));
 				echo "New record created successfully<br>";
 				?>
 				<h6 style="display: inline;">SQL: </h6>
 				<code>INSERT INTO users 
-				VALUES (NULL, 'Dorothee', 'Vader', 'test@google.com', 'Female', NULL, '11/06/1888', '39000', 'http://unknown.void',NULL, 'FR');</code>
+				VALUES (NULL, 'Dorothee', 'Vader', 'test@google.com', 'Female', NULL, '1888/06/11', '39000', 'http://unknown.void',NULL, 'FR');</code>
 				<h5>Mise à jour</h5>
 				<?php
-				$reponse = "UPDATE users  SET email='changed@email.com' WHERE last_name='Vader'";
-				$db->exec($reponse);
+				$req = $db->prepare("UPDATE users  SET email= :new_email WHERE last_name= :last_name");
+				$req->execute(array(
+					':new_email' => 'new@email.com',
+					':last_name' => 'Vader'
+				));
 				echo "Email successfully changed<br>";
 				?>
 				<h6 style="display: inline;">SQL: </h6>
@@ -181,8 +208,10 @@ include 'conndb.php';
 				WHERE last_name='Vader'</code>
 				<h5>Delete</h5>
 				<?php
-				$reponse = "DELETE FROM users WHERE last_name='Vader'";
-				$db->exec($reponse);
+				$reponse = $db->prepare("DELETE FROM users WHERE last_name= :term");
+				$reponse->execute(array(
+					'term' => 'Vader'
+				));
 				echo "user successfully deleted<br>";
 				?>
 				<h6 style="display: inline;">SQL: </h6>
@@ -191,7 +220,8 @@ include 'conndb.php';
 			<section id="exercice7">
 				<h4>7.Nombre de femme et d’homme  </h4>
 				<?php
-				$reponse = $db->query('SELECT gender, COUNT(gender) FROM users GROUP BY gender ORDER BY COUNT(gender) ASC');
+				$reponse = $db->prepare('SELECT gender, COUNT(gender) FROM users GROUP BY gender ORDER BY COUNT(gender) ASC');
+				$reponse->execute();
 				echo '<table class="table striped">
 				<tr>
 				<th>Gender</th> 
@@ -214,9 +244,10 @@ include 'conndb.php';
 				<h4>8. Afficher Age de chaque personne, puis la moyenne d’âge des femmes et des hommes  </h4>
 				<h5>Afficher âge</h5>
 				<?php
-				$reponse = $db->query('SELECT last_name, birth_date, CURDATE(),
+				$reponse = $db->prepare('SELECT last_name, birth_date, CURDATE(),
 					TIMESTAMPDIFF(YEAR,birth_date,CURDATE()) AS age 
-					FROM users WHERE birth_date is not NULL ;');
+					FROM users WHERE birth_date is not NULL ORDER BY age DESC;');
+				$reponse->execute();
 				echo '<table  class="table striped">
 				<tr>
 				<th>Users</th> 
@@ -236,9 +267,10 @@ include 'conndb.php';
 				?>
 				<h5>Moyenne âge des hommes et des femmes</h5>
 				<?php
-				$reponse = $db->query('SELECT gender, birth_date, CURDATE(),
+				$reponse = $db->prepare('SELECT gender, birth_date, CURDATE(),
 					AVG(TIMESTAMPDIFF(YEAR,birth_date,CURDATE())) AS moy_age 
 					FROM users WHERE birth_date is not NULL GROUP BY gender');
+				$reponse->execute();
 				echo '<table class="table striped">
 				<tr>
 				<th>Gender</th> 
@@ -261,7 +293,8 @@ include 'conndb.php';
 				<h4>9. Créer deux nouvelles tables, une qui contient l’ensemble des membres de l’ACS, l’autre qui contient les département avec numéros et nom écrit.</h4>
 				<h5>Afficher le nom de chaque apprenant avec son département de résidence.</h5>
 				<?php
-				$reponse = $db->query('SELECT * FROM apprenants INNER JOIN departement WHERE apprenants.id_departement = departement.departement_code');
+				$reponse = $db->prepare('SELECT * FROM apprenants INNER JOIN departement WHERE apprenants.id_departement = departement.departement_code');
+				$reponse->execute();
 
 				echo '<table class="table striped">
 				<tr>
